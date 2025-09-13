@@ -104,7 +104,7 @@ class LBPFaceRecognizer:
 
     def lbp_grid_hist(self, gray_crop: np.ndarray, grid=(6,6)) -> np.ndarray:
         """
-        GIỮ NGUYÊN TÊN HÀM. Bây giờ: chuẩn hóa ảnh về 96x96, lưu lại vào self._last_image để recognize_hist dùng.
+        Bây giờ: chuẩn hóa ảnh về 96x96, lưu lại vào self._last_image để recognize_hist dùng.
         Trả về một vector dummy (1,) để không làm hỏng các chỗ đang lưu 'emb' vào DB, nhưng sẽ KHÔNG dùng để nhận diện.
         """
         if gray_crop is None or gray_crop.size == 0:
