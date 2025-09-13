@@ -4,8 +4,7 @@ import numpy as np
 import cv2
 from typing import Dict, List, Tuple
 
-# NOTE: Chuyển sang dùng OpenCV LBPHFaceRecognizer nhưng GIỮ NGUYÊN TÊN HÀM BÊN NGOÀI.
-# Một số hàm sẽ trở thành wrapper để tương thích với luồng sẵn có.
+
 
 class LBPFaceRecognizer:
     def __init__(self, db_dir: str = "faces_db"):
@@ -22,11 +21,9 @@ class LBPFaceRecognizer:
         self._last_train_signature = None
         self._ensure_trained()
 
-    # ---------- (legacy) Histogram distance API giữ nguyên để tương thích ----------
-    def chi2_distance(self, a: np.ndarray, b: np.ndarray, eps: float = 1e-8) -> float:
-        # Không còn dùng cho nhận diện chính, nhưng giữ để không phá vỡ code cũ
-        a = a.astype(np.float32); b = b.astype(np.float32)
-        return float(0.5 * np.sum(((a - b) ** 2) / (a + b + eps)))
+    # def chi2_distance(self, a: np.ndarray, b: np.ndarray, eps: float = 1e-8) -> float:
+    #     a = a.astype(np.float32); b = b.astype(np.float32)
+    #     return float(0.5 * np.sum(((a - b) ** 2) / (a + b + eps)))
 
     def _dataset_signature(self) -> Tuple[int, int]:
         """Trả về chữ ký đơn giản của dữ liệu train (số người, tổng số ảnh) để quyết định retrain."""
@@ -75,7 +72,7 @@ class LBPFaceRecognizer:
     def recognize_hist(self, emb: np.ndarray, db_emb: Dict[str, List[List[float]]],
                        thresh: float = 0.60, margin: float = 0.03) -> Tuple[str, float, float]:
         """
-        Thay vì so khớp histogram tự code, dùng LBPHFaceRecognizer.predict trên ảnh xám 96x96 gần nhất.
+        Dùng LBPHFaceRecognizer.predict trên ảnh xám 96x96 gần nhất.
         Vẫn trả về (label, best, second) để tương thích.
         """
         # Đảm bảo model đã train (reload nếu có dữ liệu mới)
@@ -87,18 +84,17 @@ class LBPFaceRecognizer:
         except Exception:
             return "unknown", 1e9, 1e9
         name = self.label_to_name[pred_label] if 0 <= pred_label < len(self.label_to_name) else "unknown"
-        # Với LBPH, confidence càng nhỏ càng tốt. Chọn ngưỡng kinh nghiệm.
-        # Map ngưỡng từ [0..100] ~ tốt; điều chỉnh nếu cần qua tham số thresh (dùng như scale).
+
         conf_thresh = max(30.0, 100.0 * thresh)  # nếu thresh=0.6 => 60.0
         if confidence <= conf_thresh and name != "unknown":
             # second-best không có sẵn từ API; ước lượng bằng best + margin
             return name, float(confidence), float(confidence + max(1e-3, margin))
         return "unknown", float(confidence), float(confidence + max(1e-3, margin))
 
-    # ---------- Wrapper giữ nguyên tên để lấy ảnh đầu vào cho LBPH ----------
+
     def lbp_u8(self, image: np.ndarray) -> np.ndarray:
         """
-        Giữ hàm để không phá vỡ import, nhưng giờ chỉ chuẩn hóa ảnh về 96x96 và trả về chính ảnh.
+        Giờ chỉ chuẩn hóa ảnh về 96x96 và trả về chính ảnh.
         """
         if image is None or image.size == 0:
             return image
