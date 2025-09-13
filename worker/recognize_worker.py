@@ -3,7 +3,7 @@ import cv2
 
 from db.face_db import FaceDB
 from worker.detect_worker import DetectWorker
-
+import time
 class RecogWorker(DetectWorker):
     """
     Multiprocessing worker for detection + recognition.
@@ -35,7 +35,11 @@ class RecogWorker(DetectWorker):
             scale = 1.0
             small = gray
 
+            t0 = time.perf_counter()
             faces_small = self.detector.detect(small)
+            elapsed_ms = (time.perf_counter() - t0) * 1000.0
+            print(f"[Detect+Recog] Face detection took {elapsed_ms:.2f} ms ({len(faces_small)} faces)")
+
             faces = [(int(x * scale), int(y * scale), int(w * scale), int(h * scale))
                      for (x, y, w, h) in faces_small]
             labels = []
