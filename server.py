@@ -24,6 +24,10 @@ class CaptureWorker(threading.Thread):
                 if not ok:
                     time.sleep(0.02); continue
                 self.detect_worker.submit(frame_bgr)
+                t0 = time.perf_counter()
+                self.detect_worker.submit(frame_bgr)
+                elapsed_ms = (time.perf_counter() - t0) * 1000.0
+                print(f"[Detect+Recog] Face detection took {elapsed_ms:.2f} ms (faces)")
         finally:
             self.cam.release()
             
