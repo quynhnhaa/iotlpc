@@ -28,7 +28,7 @@ class RecogWorker(DetectWorker):
         if static is None:
             static = {"boxes": [], "labels": []}
 
-        gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(frame_bgr, cv2.COLOR_RGB2GRAY)
         need_detect = (frame_idx % self.detect_every_n == 0) or (not static["boxes"])
 
         if need_detect:

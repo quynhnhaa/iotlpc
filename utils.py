@@ -69,7 +69,7 @@ def enroll_from_camera(name: str, num: int, cam: VideoSource, detector: HaarFace
             _, frame = cam.read()
             if frame is None:
                 time.sleep(0.05); continue
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
             faces = detector.detect(gray)
             if len(faces) == 0:
                 continue
