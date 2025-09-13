@@ -24,10 +24,6 @@ class CaptureWorker(threading.Thread):
                 if not ok:
                     time.sleep(0.02); continue
                 self.detect_worker.submit(frame_bgr)
-                t0 = time.perf_counter()
-                self.detect_worker.submit(frame_bgr)
-                elapsed_ms = (time.perf_counter() - t0) * 1000.0
-                print(f"[Detect+Recog] Face detection took {elapsed_ms:.2f} ms (faces)")
         finally:
             self.cam.release()
             
@@ -42,10 +38,12 @@ def main(args, detect_worker: DetectWorker, capture_worker: CaptureWorker):
     cv2.resizeWindow(args.mode, width=640, height=480)
     try:
         while True:
+            t0 = time.perf_counter()
             frame = detect_worker.poll()
             if frame is not None:
                 cv2.imshow(args.mode, frame)
-
+                elapsed_ms = (time.perf_counter() - t0) * 1000.0
+                print(f"[Detect] Face detection took {elapsed_ms:.2f} ms ")
             if cv2.waitKey(1) & 0xFF == 27:
                 break
 

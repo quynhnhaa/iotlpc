@@ -93,10 +93,8 @@ class DetectWorker(Process):
             scale = 1.0
             small = gray
 
-            t0 = time.perf_counter()
+            
             faces_small = self.detector.detect(small)
-            elapsed_ms = (time.perf_counter() - t0) * 1000.0
-            print(f"[Detect] Face detection took {elapsed_ms:.2f} ms ({len(faces_small)} faces)")
 
             faces = [(int(x * scale), int(y * scale), int(w * scale), int(h * scale))
                      for (x, y, w, h) in faces_small]
