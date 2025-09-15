@@ -3,6 +3,7 @@ import queue as pyqueue
 import numpy as np
 import cv2
 from typing import Optional
+from .dongco import Servo
 
 # NOTE: detector must be constructed inside the child process to avoid pickling issues.
 class DetectWorker(Process):
@@ -22,6 +23,7 @@ class DetectWorker(Process):
         self.in_q = in_q or Queue(maxsize=2)
         self.out_q = out_q or Queue(maxsize=1)
         self._stop = Event()
+        self.servo: Optional[Servo] = None
         self.frame_idx = 0
 
     # ----- API for the main process -----
@@ -53,6 +55,8 @@ class DetectWorker(Process):
     def _init_in_child(self):
         # Construct heavy objects in child process
         self.detector = self.detector_cls()
+        if self.use_picam:
+            self.servo = Servo(pin=18) # Khởi tạo đối tượng servo
 
     def run(self):
         self._init_in_child()
@@ -79,6 +83,10 @@ class DetectWorker(Process):
                     self.out_q.put_nowait(out)
                 except Exception:
                     pass
+        
+        # Dọn dẹp tài nguyên trước khi thoát
+        if self.servo:
+            self.servo.cleanup()
 
     # ----- Detection & drawing -----
     def annotate_and_encode(self, frame_bgr: np.ndarray, frame_idx = 0, static=None):
@@ -96,13 +104,10 @@ class DetectWorker(Process):
             faces = [(x, y, w, h) for (x, y, w, h) in faces if min(w, h) >= 48]
             static["boxes"] = faces
 
-        # LED feedback on Pi
-        if self.use_picam and len(self.led_pins) > 0:
-            try:
-                import RPi.GPIO as GPIO
-                GPIO.output(self.led_pins[0], GPIO.HIGH if static['boxes'] else GPIO.LOW)
-            except Exception:
-                pass
+        # Điều khiển servo trên Pi
+        if self.servo:
+            target_angle = 90 if static['boxes'] else 0
+            self.servo.set_angle(target_angle)
 
         for (x, y, w, h) in static["boxes"]:
             cv2.rectangle(frame_bgr, (x, y), (x + w, y + h), (0, 255, 0), 2)
